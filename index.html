@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Urban Roti — Catering Inquiry</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brand: #3a2317;        /* Urban Roti deep brown */
+    --brand-dark: #2a190f;
+    --accent: #ee8b2d;       /* Urban Roti orange */
+    --bg: #fdf6ef;
+    --card: #ffffff;
+    --text: #2d2a26;
+    --muted: #7a736b;
+    --border: #e6ddd3;
+    --ok: #1e7d4f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 16px; }
+
+  header {
+    background: #fff;
+    text-align: center;
+    padding: 22px 16px 18px;
+    border-bottom: 4px solid var(--accent);
+    box-shadow: 0 4px 18px rgba(58,35,23,.12);
+  }
+  header .logo-img {
+    max-width: 340px; width: 82%; height: auto; display: block; margin: 0 auto;
+  }
+  header .logo-svg {
+    max-width: 340px; width: 82%; height: auto; display: none; margin: 0 auto;
+  }
+  header h1 { margin: 0; font-size: 22px; letter-spacing: .5px; color: var(--brand); }
+  header p {
+    margin: 10px 0 0; font-size: 14px; font-weight: 600;
+    color: var(--brand); letter-spacing: 2px; text-transform: uppercase;
+  }
+
+  form { margin-top: 18px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.04);
+  }
+  .field { margin-bottom: 16px; }
+  .field:last-child { margin-bottom: 0; }
+  label {
+    display: block;
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+  label .req { color: var(--brand); }
+  .hint { font-weight: 400; color: var(--muted); font-size: 12px; }
+
+  input, select, textarea {
+    width: 100%;
+    padding: 11px 12px;
+    font-size: 16px;
+    font-family: inherit;
+    color: var(--text);
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(230,126,34,.15);
+  }
+  textarea { resize: vertical; min-height: 70px; }
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; }
+
+  .err { color: var(--brand); font-size: 12.5px; margin-top: 5px; display: none; }
+  .field.invalid input,
+  .field.invalid select,
+  .field.invalid textarea { border-color: var(--brand); }
+  .field.invalid .err { display: block; }
+
+  .actions { margin-top: 18px; display: flex; flex-direction: column; gap: 12px; }
+  .btn {
+    border: none; cursor: pointer;
+    padding: 14px 16px;
+    font-size: 16px; font-weight: 700;
+    border-radius: 12px;
+    color: #fff;
+    display: flex; align-items: center; justify-content: center; gap: 9px;
+    transition: transform .05s, filter .15s;
+  }
+  .btn:active { transform: scale(.98); }
+  .btn:hover { filter: brightness(1.05); }
+  .btn-wa { background: #25D366; }
+  .btn-email { background: var(--accent); }
+  .btn svg { width: 20px; height: 20px; fill: currentColor; }
+
+  .note {
+    text-align: center; color: var(--muted);
+    font-size: 12.5px; margin: 16px 4px 28px;
+  }
+  .toast {
+    position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(20px);
+    background: var(--ok); color: #fff; padding: 12px 18px; border-radius: 10px;
+    font-size: 14px; font-weight: 600; box-shadow: 0 6px 20px rgba(0,0,0,.2);
+    opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; z-index: 50;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+  <header>
+    <img class="logo-img" src="logo.png" alt="Urban Roti"
+         onerror="this.style.display='none';document.getElementById('logoSvg').style.display='block';" />
+
+    <!-- On-brand SVG fallback (used until logo.png is added to the folder) -->
+    <svg id="logoSvg" class="logo-svg" viewBox="0 0 1000 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Urban Roti">
+      <!-- brown band -->
+      <rect x="30" y="118" width="940" height="124" rx="6" fill="#3a2317"/>
+      <!-- emblem -->
+      <circle cx="500" cy="180" r="132" fill="#3a2317"/>
+      <circle cx="500" cy="180" r="132" fill="none" stroke="#ee8b2d" stroke-width="14"/>
+      <circle cx="500" cy="180" r="104" fill="none" stroke="#ee8b2d" stroke-width="14"/>
+      <!-- UR monogram -->
+      <text x="500" y="184" text-anchor="middle" dominant-baseline="central"
+            font-family="Comfortaa, sans-serif" font-weight="700" font-size="96" fill="#ee8b2d">UR</text>
+      <!-- wordmark -->
+      <text x="195" y="182" text-anchor="middle" dominant-baseline="central"
+            font-family="Comfortaa, sans-serif" font-weight="700" font-size="62" letter-spacing="4" fill="#ee8b2d">URBAN</text>
+      <text x="812" y="182" text-anchor="middle" dominant-baseline="central"
+            font-family="Comfortaa, sans-serif" font-weight="700" font-size="62" letter-spacing="4" fill="#ee8b2d">ROTI</text>
+    </svg>
+
+    <p>Catering Inquiry Form</p>
+  </header>
+
+  <div class="wrap">
+    <form id="inquiryForm" novalidate>
+      <div class="card">
+
+        <div class="field">
+          <label for="name">Name <span class="req">*</span></label>
+          <input type="text" id="name" name="name" placeholder="Your full name" autocomplete="name" />
+          <div class="err">Please enter your name.</div>
+        </div>
+
+        <div class="field">
+          <label for="contact">Contact No. <span class="req">*</span></label>
+          <input type="tel" id="contact" name="contact" placeholder="e.g. 8123 4567" autocomplete="tel" inputmode="numeric" maxlength="9" />
+          <div class="err">Please enter a valid 8-digit Singapore number.</div>
+        </div>
+
+        <div class="field">
+          <label for="email">Email Address <span class="req">*</span></label>
+          <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" />
+          <div class="err">Please enter a valid email address.</div>
+        </div>
+
+        <div class="field">
+          <label for="eventType">Event Type <span class="req">*</span></label>
+          <select id="eventType" name="eventType">
+            <option value="" disabled selected>Select event type</option>
+            <option value="Banquet (BQT)">Banquet (BQT)</option>
+            <option value="Outdoor Catering (ODC)">Outdoor Catering (ODC)</option>
+            <option value="Home Delivery">Home Delivery</option>
+            <option value="Self Pickup">Self Pickup</option>
+            <option value="Corporate / Office">Corporate / Office</option>
+            <option value="Other">Other</option>
+          </select>
+          <div class="err">Please select an event type.</div>
+        </div>
+
+        <div class="field">
+          <label for="slot">Slot <span class="req">*</span></label>
+          <select id="slot" name="slot">
+            <option value="" disabled selected>Select slot</option>
+            <option value="Lunch">Lunch</option>
+            <option value="Dinner">Dinner</option>
+            <option value="Hi-Tea">Hi-Tea</option>
+            <option value="All Day">All Day</option>
+          </select>
+          <div class="err">Please select a slot.</div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="eventDate">Event Date <span class="req">*</span></label>
+            <input type="date" id="eventDate" name="eventDate" />
+            <div class="err">Please pick a date.</div>
+          </div>
+          <div class="field">
+            <label for="eventTime">Event Time <span class="req">*</span></label>
+            <input type="time" id="eventTime" name="eventTime" />
+            <div class="err">Please pick a time.</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>No. of Pax <span class="req">*</span> <span class="hint">(adults &amp; kids)</span></label>
+          <div class="row">
+            <div>
+              <input type="number" id="adults" name="adults" min="0" placeholder="Adults" inputmode="numeric" />
+            </div>
+            <div>
+              <input type="number" id="kids" name="kids" min="0" placeholder="Kids" inputmode="numeric" />
+            </div>
+          </div>
+          <div class="err">Please enter the number of guests.</div>
+        </div>
+
+        <div class="field">
+          <label for="venue">Venue <span class="req">*</span></label>
+          <input type="text" id="venue" name="venue" placeholder="Address / hall / location" />
+          <div class="err">Please enter the venue.</div>
+        </div>
+
+        <div class="field">
+          <label for="menu">Menu <span class="hint">(dishes / cuisine / package)</span></label>
+          <textarea id="menu" name="menu" placeholder="e.g. North Indian thali, paneer dishes, biryani, desserts..."></textarea>
+        </div>
+
+        <div class="field">
+          <label for="notes">Additional Notes</label>
+          <textarea id="notes" name="notes" placeholder="Allergies, dietary needs, budget, special requests..."></textarea>
+        </div>
+
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn btn-wa" id="sendWhatsApp">
+          <svg viewBox="0 0 32 32"><path d="M16 .4C7.4.4.4 7.4.4 16c0 2.8.7 5.5 2.1 7.9L.3 31.7l8-2.1c2.3 1.3 4.9 1.9 7.7 1.9 8.6 0 15.6-7 15.6-15.6S24.6.4 16 .4zm0 28.5c-2.5 0-4.9-.7-7-1.9l-.5-.3-4.7 1.2 1.3-4.6-.3-.5a12.8 12.8 0 01-2-6.8C2.8 8.7 8.7 2.9 16 2.9S29.2 8.7 29.2 16 23.3 28.9 16 28.9zm7.2-9.6c-.4-.2-2.3-1.1-2.7-1.3-.4-.1-.6-.2-.9.2-.3.4-1 1.3-1.2 1.5-.2.2-.4.3-.8.1-.4-.2-1.7-.6-3.2-2-1.2-1-2-2.4-2.2-2.8-.2-.4 0-.6.2-.8l.6-.7c.2-.2.3-.4.4-.6.1-.2 0-.5 0-.7s-.9-2.2-1.3-3c-.3-.7-.6-.6-.9-.6h-.7c-.2 0-.6.1-1 .5s-1.4 1.3-1.4 3.3 1.4 3.8 1.6 4.1c.2.3 2.8 4.3 6.8 6 .9.4 1.7.6 2.3.8.9.3 1.8.2 2.5.2.8-.1 2.3-.9 2.6-1.9.3-.9.3-1.7.2-1.9-.1-.1-.3-.2-.7-.4z"/></svg>
+          Send on WhatsApp
+        </button>
+        <button type="button" class="btn btn-email" id="sendEmail">
+          <svg viewBox="0 0 24 24"><path d="M20 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+          Send via Email
+        </button>
+      </div>
+
+      <p class="note">Your details will open in WhatsApp or your email app, pre-filled and ready to send to Urban Roti.</p>
+    </form>
+  </div>
+
+  <div class="toast" id="toast">Opening…</div>
+
+<script>
+  /* ============================================================
+     CONFIG  — Urban Roti, edit these two lines with real details
+     ============================================================ */
+  const RESTAURANT_WHATSAPP = "919999999999"; // intl format, no '+', no spaces (e.g. 91 = India)
+  const RESTAURANT_EMAIL    = "admin@urbanroti.com.sg";
+  /* ============================================================ */
+
+  const form = document.getElementById("inquiryForm");
+
+  function field(id) { return document.getElementById(id); }
+  function fieldWrap(id) { return field(id).closest(".field"); }
+
+  function showError(id, on) {
+    fieldWrap(id).classList.toggle("invalid", on);
+  }
+
+  function validate() {
+    let ok = true;
+    const required = ["name", "contact", "email", "eventType", "slot", "eventDate", "eventTime", "venue"];
+    required.forEach(id => {
+      const v = field(id).value.trim();
+      const bad = !v;
+      showError(id, bad);
+      if (bad) ok = false;
+    });
+
+    // contact: exactly 8 digits (Singapore)
+    const digits = field("contact").value.replace(/\D/g, "");
+    if (digits.length !== 8) { showError("contact", true); ok = false; }
+
+    // email basic check
+    const email = field("email").value.trim();
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showError("email", true); ok = false; }
+
+    // pax: at least one of adults/kids > 0
+    const adults = parseInt(field("adults").value || "0", 10);
+    const kids   = parseInt(field("kids").value || "0", 10);
+    const paxBad = !(adults > 0 || kids > 0);
+    fieldWrap("adults").classList.toggle("invalid", paxBad);
+    if (paxBad) ok = false;
+
+    if (!ok) {
+      const firstBad = form.querySelector(".field.invalid");
+      if (firstBad) firstBad.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    return ok;
+  }
+
+  function formatDate(iso) {
+    if (!iso) return "";
+    const [y, m, d] = iso.split("-");
+    return `${d}/${m}/${y}`; // dd/mm/yyyy
+  }
+
+  function formatTime(t) {
+    if (!t) return "";
+    let [h, m] = t.split(":").map(Number);
+    const ampm = h >= 12 ? "PM" : "AM";
+    h = h % 12 || 12;
+    return `${h}:${String(m).padStart(2, "0")} ${ampm}`; // 12hr
+  }
+
+  function buildSummary() {
+    const adults = parseInt(field("adults").value || "0", 10);
+    const kids   = parseInt(field("kids").value || "0", 10);
+    const paxParts = [];
+    if (adults > 0) paxParts.push(`${adults} adult${adults > 1 ? "s" : ""}`);
+    if (kids > 0)   paxParts.push(`${kids} kid${kids > 1 ? "s" : ""}`);
+    const total = adults + kids;
+    const pax = `${paxParts.join(" + ")} (total ${total})`;
+
+    const lines = [
+      "*Urban Roti — Catering Inquiry*",
+      "",
+      `*Name:* ${field("name").value.trim()}`,
+      `*Contact:* ${field("contact").value.trim()}`,
+      `*Email:* ${field("email").value.trim()}`,
+      `*Event Type:* ${field("eventType").value}`,
+      `*Slot:* ${field("slot").value}`,
+      `*Event Date:* ${formatDate(field("eventDate").value)}`,
+      `*Event Time:* ${formatTime(field("eventTime").value)}`,
+      `*No. of Pax:* ${pax}`,
+      `*Venue:* ${field("venue").value.trim()}`,
+    ];
+    const menu = field("menu").value.trim();
+    if (menu) lines.push(`*Menu:* ${menu}`);
+    const notes = field("notes").value.trim();
+    if (notes) lines.push(`*Additional Notes:* ${notes}`);
+    return lines.join("\n");
+  }
+
+  function toast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 2200);
+  }
+
+  document.getElementById("sendWhatsApp").addEventListener("click", () => {
+    if (!validate()) return;
+    const text = encodeURIComponent(buildSummary());
+    const url = `https://wa.me/${RESTAURANT_WHATSAPP}?text=${text}`;
+    toast("Opening WhatsApp…");
+    window.open(url, "_blank");
+  });
+
+  document.getElementById("sendEmail").addEventListener("click", () => {
+    if (!validate()) return;
+    // email body: strip WhatsApp asterisks for clean text
+    const body = buildSummary().replace(/\*/g, "");
+    const subject = `Catering Inquiry — ${field("name").value.trim()} (${formatDate(field("eventDate").value)})`;
+    const url = `mailto:${RESTAURANT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    toast("Opening email…");
+    window.location.href = url;
+  });
+
+  // clear error styling as the user fixes a field
+  form.addEventListener("input", e => {
+    const wrap = e.target.closest(".field");
+    if (wrap) wrap.classList.remove("invalid");
+  });
+</script>
+</body>
+</html>
