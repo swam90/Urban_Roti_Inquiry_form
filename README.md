@@ -36,21 +36,33 @@ A PNG with a transparent background looks best on the white header. (A `.jpg` wo
 
 Just double-click `index.html` to open it in any browser.
 
-## 3. Publish it to get a shareable weblink
+## 3. Live weblink (auto-deployed via GitHub Pages)
 
-The form needs to be online to share as a link. Pick any free static host:
+This repo includes a GitHub Actions workflow (`.github/workflows/deploy.yml`) that
+**automatically publishes the form every time you push to `main`**.
 
-- **Netlify Drop** — go to https://app.netlify.com/drop and drag the `index.html` file in. You instantly get a link like `https://your-name.netlify.app`.
-- **GitHub Pages** — push this repo, enable Pages in repo Settings → Pages.
-- **Cloudflare Pages / Vercel** — connect the repo and deploy.
+**One-time setup:** in the repo, go to **Settings → Pages → Build and deployment**
+and set **Source = GitHub Actions**. After the next push, the workflow deploys the site.
+
+Live URL:
+
+```
+https://swam90.github.io/Urban_Roti_Inquiry_form/
+```
+
+You can watch deploys under the repo's **Actions** tab.
 
 ## 4. Share the weblink
 
-Once you have the link (e.g. `https://urbanroti.netlify.app`):
+- **WhatsApp:** paste the URL into any chat, or your Business catalog / status.
+- **Email:** add the URL to your signature or campaigns.
+- **QR code:** print `qr-code.png` (or `qr-code.svg` for sharp large prints) on flyers,
+  menus, and table cards. It points straight to the live form. Regenerate it any time with:
 
-- **WhatsApp:** paste the link into any chat or your Business catalog/status.
-- **Email:** paste the link into your signature or campaigns.
-- **QR code:** generate a QR from the link and print it on flyers / table cards.
+  ```bash
+  python -m pip install segno
+  python -c "import segno; segno.make('https://swam90.github.io/Urban_Roti_Inquiry_form/', error='h').save('qr-code.png', scale=12, border=4, dark='#3a2317', light='#ffffff')"
+  ```
 
 ## How submissions reach you
 
