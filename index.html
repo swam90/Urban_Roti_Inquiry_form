@@ -87,6 +87,10 @@
   .row > div { flex: 1; }
 
   .err { color: var(--brand); font-size: 12.5px; margin-top: 5px; display: none; }
+  .lookup { font-size: 12.5px; margin-top: 6px; min-height: 16px; }
+  .lookup.loading { color: var(--muted); }
+  .lookup.ok { color: var(--ok); }
+  .lookup.warn { color: #b9770e; }
   .field.invalid input,
   .field.invalid select,
   .field.invalid textarea { border-color: var(--brand); }
@@ -159,7 +163,7 @@
 
         <div class="field">
           <label for="contact">Contact No. <span class="req">*</span></label>
-          <input type="tel" id="contact" name="contact" placeholder="e.g. 8123 4567" autocomplete="tel" inputmode="numeric" maxlength="9" />
+          <input type="tel" id="contact" name="contact" placeholder="e.g. 81234567" autocomplete="tel" inputmode="numeric" maxlength="8" />
           <div class="err">Please enter a valid 8-digit Singapore number.</div>
         </div>
 
@@ -222,14 +226,28 @@
         </div>
 
         <div class="field">
-          <label for="venue">Venue <span class="req">*</span></label>
-          <input type="text" id="venue" name="venue" placeholder="Address / hall / location" />
+          <label for="postal">Postal Code <span class="req">*</span> <span class="hint">(auto-fills address)</span></label>
+          <input type="text" id="postal" name="postal" inputmode="numeric" maxlength="6" placeholder="e.g. 238839" autocomplete="postal-code" />
+          <div class="lookup" id="postalStatus"></div>
+          <div class="err">Please enter a valid 6-digit postal code.</div>
+        </div>
+
+        <div class="field">
+          <label for="venue">Venue / Address <span class="req">*</span></label>
+          <textarea id="venue" name="venue" placeholder="Type a postal code above, or enter the address / hall / location here"></textarea>
           <div class="err">Please enter the venue.</div>
         </div>
 
         <div class="field">
-          <label for="menu">Menu <span class="hint">(dishes / cuisine / package)</span></label>
+          <label for="unit">Unit / Floor No. <span class="req" id="unitReq" style="display:none">*</span> <span class="hint" id="unitHint">(optional)</span></label>
+          <input type="text" id="unit" name="unit" placeholder="e.g. #12-34" />
+          <div class="err">Unit / floor no. is required for home delivery.</div>
+        </div>
+
+        <div class="field">
+          <label for="menu">Menu <span class="req">*</span> <span class="hint">(dishes / cuisine / package)</span></label>
           <textarea id="menu" name="menu" placeholder="e.g. North Indian thali, paneer dishes, biryani, desserts..."></textarea>
+          <div class="err">Please tell us the menu / dishes required.</div>
         </div>
 
         <div class="field">
@@ -275,7 +293,7 @@
 
   function validate() {
     let ok = true;
-    const required = ["name", "contact", "email", "eventType", "slot", "eventDate", "eventTime", "venue"];
+    const required = ["name", "contact", "email", "eventType", "slot", "eventDate", "eventTime", "venue", "menu"];
     required.forEach(id => {
       const v = field(id).value.trim();
       const bad = !v;
@@ -286,6 +304,16 @@
     // contact: exactly 8 digits (Singapore)
     const digits = field("contact").value.replace(/\D/g, "");
     if (digits.length !== 8) { showError("contact", true); ok = false; }
+
+    // postal code: required, exactly 6 digits
+    const pc = field("postal").value.replace(/\D/g, "");
+    if (pc.length !== 6) { showError("postal", true); ok = false; }
+
+    // unit / floor: required only for Home Delivery
+    const isDelivery = field("eventType").value === "Home Delivery";
+    const unitBad = isDelivery && !field("unit").value.trim();
+    showError("unit", unitBad);
+    if (unitBad) ok = false;
 
     // email basic check
     const email = field("email").value.trim();
@@ -339,7 +367,7 @@
       `*Event Date:* ${formatDate(field("eventDate").value)}`,
       `*Event Time:* ${formatTime(field("eventTime").value)}`,
       `*No. of Pax:* ${pax}`,
-      `*Venue:* ${field("venue").value.trim()}`,
+      `*Venue:* ${[field("venue").value.trim(), field("unit").value.trim()].filter(Boolean).join(", ")}`,
     ];
     const menu = field("menu").value.trim();
     if (menu) lines.push(`*Menu:* ${menu}`);
@@ -354,6 +382,61 @@
     t.classList.add("show");
     setTimeout(() => t.classList.remove("show"), 2200);
   }
+
+  // ---- Postal code -> address auto-fill (Singapore OneMap, free, no key) ----
+  const postalEl = field("postal");
+  const venueEl = field("venue");
+  const statusEl = document.getElementById("postalStatus");
+  let lastLookup = "";
+
+  async function lookupPostal() {
+    const pc = postalEl.value.replace(/\D/g, "");
+    if (pc.length !== 6 || pc === lastLookup) return;
+    lastLookup = pc;
+    statusEl.className = "lookup loading";
+    statusEl.textContent = "Looking up address…";
+    try {
+      const res = await fetch(
+        `https://www.onemap.gov.sg/api/common/elastic/search?searchVal=${pc}&returnGeom=N&getAddrDetails=Y&pageNum=1`
+      );
+      const data = await res.json();
+      if (data.found > 0 && data.results && data.results.length) {
+        const r = data.results[0];
+        const addr = (r.ADDRESS && r.ADDRESS !== "NIL")
+          ? r.ADDRESS
+          : [r.BLK_NO, r.ROAD_NAME, r.BUILDING, "SINGAPORE " + r.POSTAL].filter(Boolean).join(" ");
+        venueEl.value = addr;
+        fieldWrap("venue").classList.remove("invalid");
+        statusEl.className = "lookup ok";
+        statusEl.textContent = "✓ Address filled in below — edit if needed, and add unit/floor no.";
+      } else {
+        statusEl.className = "lookup warn";
+        statusEl.textContent = "No address found for this postal code. Please enter it manually below.";
+      }
+    } catch (e) {
+      statusEl.className = "lookup warn";
+      statusEl.textContent = "Couldn't fetch automatically. Please enter the address manually below.";
+    }
+  }
+
+  postalEl.addEventListener("input", () => {
+    if (postalEl.value.replace(/\D/g, "").length === 6) lookupPostal();
+    else { lastLookup = ""; statusEl.textContent = ""; statusEl.className = "lookup"; }
+  });
+  postalEl.addEventListener("blur", lookupPostal);
+
+  // ---- Contact no.: digits only, max 8 ----
+  field("contact").addEventListener("input", e => {
+    e.target.value = e.target.value.replace(/\D/g, "").slice(0, 8);
+  });
+
+  // ---- Unit / floor no. becomes required when Home Delivery is chosen ----
+  field("eventType").addEventListener("change", () => {
+    const isDelivery = field("eventType").value === "Home Delivery";
+    document.getElementById("unitReq").style.display = isDelivery ? "" : "none";
+    document.getElementById("unitHint").style.display = isDelivery ? "none" : "";
+    if (!isDelivery) showError("unit", false);
+  });
 
   document.getElementById("sendWhatsApp").addEventListener("click", () => {
     if (!validate()) return;
